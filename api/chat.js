@@ -1,42 +1,39 @@
-// api/analyze.js
+// api/analyze.js (디버깅용 수정버전)
 export default async function handler(req, res) {
-    // 1. Vercel 환경변수에서 API 키를 가져옴 (보안)
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // 2. 프론트엔드에서 보낸 텍스트 받기
-    const { text } = req.body;
+    // 🔍 [디버깅 1] Vercel 로그에 키 상태 출력 (키 자체는 보안상 *로 가림)
+    console.log("---------------------------------------------------");
+    console.log("API 호출됨!");
+    console.log("현재 등록된 API KEY 상태:", apiKey ? "✅ 존재함 (값 있음)" : "❌ 없음 (undefined)");
+    console.log("---------------------------------------------------");
 
+    // 1. 키가 없을 때 명확한 에러 메시지 보내기
     if (!apiKey) {
-        return res.status(500).json({ error: "API 키가 설정되지 않았습니다." });
+        return res.status(500).json({ 
+            error: "CRITICAL_ERROR", 
+            message: "Vercel 환경변수(Env)가 비어있습니다. Settings에서 GEMINI_API_KEY를 확인하고 재배포하세요." 
+        });
     }
 
-    // 3. AI에게 보낼 프롬프트 구성
-    const prompt = `
-    너는 대한민국 최고의 '꼰대 판독 전문가'야. 입력 텍스트: "${text}"
-    분석 항목: 1. 꼰대력(0~100) 2. 비유 캐릭터 3. 팩폭멘트 4. 순화된 표현
-    1. 꼰대력: 입력 텍스트가 얼마나 꼰대스러운지 0에서 100까지 점수로 매겨줘.
-    2. 비유 캐릭터: 입력 텍스트의 말투를 동물이나 유명인 등으로 비유해서 설명해줘.
-    3. 팩폭멘트: 입력 텍스트가 왜 꼰대 같다고 느껴지는지 간단명료하게 팩폭해줘.
-    4. 순화된 표현: 입력 텍스트를 더 부드럽고 친근하게 바꿔줘.
-    5. 반드시 아래 응답 형식을 지켜서 해줘.
-    응답 형식(JSON): {"score": 80, "character": "...", "roast": "...", "fix": "..."}
-    `;
+    const { text } = req.body;
+    
+    // ... (이하 로직 동일) ...
+    const prompt = `너는 꼰대 판독기야. 텍스트: "${text}". JSON으로 답해줘: {"score": 80, "character": "...", "roast": "...", "fix": "..."}`;
 
     try {
-        // 4. 구글 Gemini API 호출 (모델은 1.5-flash가 가장 안정적입니다)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
         const data = await response.json();
 
-        // 5. 결과 처리 및 반환
+        // 구글 에러가 났을 때 확인
         if (data.error) {
-            throw new Error(data.error.message);
+            console.error("구글 API 에러:", data.error);
+            return res.status(500).json({ error: "GOOGLE_API_ERROR", message: data.error.message });
         }
 
         const rawText = data.candidates[0].content.parts[0].text;
@@ -46,7 +43,7 @@ export default async function handler(req, res) {
         res.status(200).json(result);
 
     } catch (error) {
-        console.error("API Error:", error);
-        res.status(500).json({ error: "AI 분석 중 오류가 발생했습니다." });
+        console.error("서버 내부 에러:", error);
+        res.status(500).json({ error: "SERVER_ERROR", message: error.message });
     }
 }
