@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     try {
         // 4. 구글 Gemini API 호출 (모델은 1.5-flash가 가장 안정적입니다)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
