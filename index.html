@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="내 말투는 꼰대일까? AI가 분석해주는 꼰대력 테스트 및 말투 세탁기.">
+    <meta property="og:title" content="🚨 AI 꼰대 판독기 & 말투 세탁소">
+    <meta property="og:description" content="너 T야? 혹시 꼰대야? 내 말투 넣으면 AI가 팩폭 날려줌 ㅋㅋㅋ">
+    <meta property="og:image" content="https://cdn-icons-png.flaticon.com/512/1611/1611637.png">
+    <title>AI 꼰대 판독기 & 말투 세탁소</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+    <style>
+        /* 기존 스타일 그대로 유지 (생략 없이 사용하세요) */
+        @font-face { font-family: 'Pretendard-Regular'; src: url('https://cdn.jsdelivr.net/gh/Project-Noonnu/noonfonts_2107@1.1/Pretendard-Regular.woff') format('woff'); font-weight: 400; font-style: normal; }
+        body { font-family: 'Pretendard-Regular', sans-serif; background-color: #121212; color: #ffffff; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 500px; padding: 20px; box-sizing: border-box; text-align: center; min-height: 80vh; }
+        h1 { margin-top: 40px; font-size: 2rem; color: #ff5e57; text-shadow: 0 0 10px rgba(255, 94, 87, 0.5); letter-spacing: -1px; }
+        .subtitle { color: #888; margin-bottom: 30px; font-size: 1rem; line-height: 1.4; }
+        textarea { width: 100%; height: 120px; background: #2c2c2c; border: 2px solid #444; color: #fff; border-radius: 12px; padding: 15px; font-size: 1rem; resize: none; box-sizing: border-box; outline: none; transition: 0.3s; }
+        textarea:focus { border-color: #ff5e57; background: #333; }
+        .btn-primary { width: 100%; padding: 16px; background: linear-gradient(45deg, #ff5e57, #ff3f34); color: white; border: none; border-radius: 12px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); transition: transform 0.2s; }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-primary:disabled { background: #555; cursor: not-allowed; }
+        #loadingModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .ad-box { background: white; padding: 20px; border-radius: 15px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: popIn 0.3s ease-out; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #resultArea { display: none; margin-top: 30px; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .receipt-card { background: #1e1e1e; color: #eee; padding: 25px; border-radius: 16px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: left; margin-bottom: 20px; border: 1px solid #333; }
+        .receipt-header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .receipt-header h2 { margin: 0; font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; color: #ff5e57; }
+        .receipt-date { font-size: 0.8rem; color: #888; margin-top: 5px; }
+        .score-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; }
+        .score-val { color: #d63031; font-size: 1.8rem; text-shadow: 0 0 10px rgba(214, 48, 49, 0.3); }
+        .analysis-box { background: #2a2a2a; padding: 15px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #3e3e3e; }
+        .label { font-size: 0.75rem; color: #aaa; font-weight: bold; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .content { font-size: 1rem; line-height: 1.5; font-weight: 500; word-break: keep-all; color: #fff; }
+        .roast-box { background: #2a251a !important; border-color: #ffc107 !important; }
+        .roast-text { color: #ffc107; }
+        .fix-box { background: #1a2a2a; border: 1px solid #00b894; padding: 15px; border-radius: 12px; margin-top: 12px; }
+        .fix-text { color: #55efc4; font-weight: bold; }
+        .share-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        .share-btn { flex: 1; border: none; border-radius: 10px; padding: 14px 0; font-size: 1rem; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: bold; }
+        .btn-insta { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+        .btn-copy { background: #444; }
+        .seo-content { width: 100%; padding: 40px 20px; background: #0a0a0a; color: #444; text-align: left; border-top: 1px solid #222; box-sizing: border-box; margin-top: 50px; }
+        footer { padding: 30px; color: #555; font-size: 0.8rem; text-align: center; background: #0a0a0a; width: 100%; box-sizing: border-box;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🚨 AI 꼰대 판독기</h1>
+        <p class="subtitle">너의 카톡 말투, 혹시 숨 막히는 부장님?<br>AI가 냉정하게 판독하고 세탁해드립니다.</p>
+        
+        <textarea id="userInput" placeholder="검사하고 싶은 카톡 내용이나 멘트를 붙여넣으세요. &#13;&#10;(예: OO씨 주말에 쉬는데 미안한데 급한 건이라...)"></textarea>
+        
+        <button onclick="analyze()" id="btn" class="btn-primary">⚡ 5초만에 판독하기</button>
+
+        <div id="resultArea">
+            <div class="receipt-card" id="captureTarget">
+                <div class="receipt-header">
+                    <h2>RESULTS</h2>
+                    <div class="receipt-date" id="currentDate"></div>
+                </div>
+                <div class="score-row">
+                    <span>☢️ 꼰대 농도</span>
+                    <span class="score-val" id="score">0%</span>
+                </div>
+                <div class="analysis-box">
+                    <span class="label">YOUR CHARACTER (비유)</span>
+                    <div class="content" id="character">분석 중...</div>
+                </div>
+                <div class="analysis-box roast-box">
+                    <span class="label" style="color: #ffc107;">💉 FACT BOMB (팩폭)</span>
+                    <div class="content roast-text" id="roast">분석 중...</div>
+                </div>
+                <div class="fix-box">
+                    <span class="label" style="color: #55efc4;">✨ AI CLEANING (세탁 완료)</span>
+                    <div class="content fix-text" id="fix">분석 중...</div>
+                </div>
+                <div style="text-align: center; margin-top: 20px; color:#555; font-size: 0.7rem;">AI 꼰대 판독기</div>
+            </div>
+
+            <div class="share-container">
+                <button class="share-btn btn-insta" onclick="saveImage()"><i class="fas fa-download"></i> 이미지 저장</button>
+                <button class="share-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i> 주소 복사</button>
+            </div>
+
+            <a href="https://www.coupang.com/" target="_blank" style="display:block; margin-top:15px; padding:15px; background:#2c2c2c; color:#ddd; text-decoration:none; border-radius:12px; font-size:0.95rem; border:1px solid #444; transition:0.3s;">
+                🤯 팩폭 맞고 어질어질하다면? <span style="color:#ff5e57; font-weight:bold;">달달한 간식 보러가기 👉</span>
+            </a>
+        </div>
+    </div>
+
+    <div id="loadingModal">
+        <div style="color:white; font-size:1.4rem; margin-bottom:20px; font-weight:bold;">🌪️ AI가 꼰대력을 분석 중...</div>
+        <div class="ad-box">
+            <script src="https://ads-partners.coupang.com/g.js"></script>
+            <script>
+                // ⚠️ 주의: 쿠팡 파트너스 승인된 도메인에서만 보입니다
+                new PartnersCoupang.G({"id":953674,"template":"carousel","trackingCode":"AF4193966","width":"300","height":"300","tsource":""});
+            </script>
+            <p style="font-size:1.1rem; font-weight:bold; margin: 15px 0 5px 0; color: black;">🔥 기다리는 동안 특가 구경! 🔥</p>
+        </div>
+        <div style="color:#aaa; margin-top:25px; font-size:1rem;">
+            잠시 후 결과가 나옵니다... <span id="countdown" style="color:#ff5e57; font-weight:bold;">5</span>
+        </div>
+    </div>
+
+    <div class="seo-content">
+        <h3>꼰대 판독기 사용법</h3>
+        <p>결과가 나오면 '이미지 저장' 버튼을 눌러 인스타그램 스토리에 공유하거나, '주소 복사' 버튼을 눌러 친구들에게 테스트를 공유해보세요.</p>
+    </div>
+    <footer><p>© 2025 AI KKondae Scanner. All rights reserved.</p></footer>
+
+    <script>
+        // 날짜 세팅
+        const now = new Date();
+        document.getElementById('currentDate').innerText = `${now.getFullYear()}.${now.getMonth()+1}.${now.getDate()} 발행`;
+
+        // 1️⃣ 분석 함수 (Vercel Serverless 호출 방식)
+        async function analyze() {
+            const text = document.getElementById('userInput').value;
+            if (!text || text.length < 2) return alert("내용이 너무 짧아요!");
+
+            const btn = document.getElementById('btn');
+            const modal = document.getElementById('loadingModal');
+            const resultArea = document.getElementById('resultArea');
+            const countdownElem = document.getElementById('countdown');
+
+            btn.disabled = true;
+            modal.style.display = 'flex';
+            resultArea.style.display = 'none';
+
+            // 카운트다운
+            let timeLeft = 5;
+            if(countdownElem) countdownElem.innerText = timeLeft;
+            const timer = setInterval(() => {
+                timeLeft--;
+                if(countdownElem) countdownElem.innerText = timeLeft;
+                if (timeLeft <= 0) clearInterval(timer);
+            }, 1000);
+
+            try {
+                // 👇 여기가 핵심! 구글 대신 내 서버(api/analyze)로 요청
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text }) // 프롬프트는 서버에서 만듦
+                });
+
+                if (!response.ok) throw new Error("서버 연결 실패");
+                const result = await response.json();
+
+                // 결과 표시
+                document.getElementById('score').innerText = `${result.score}%`;
+                document.getElementById('character').innerText = result.character;
+                document.getElementById('roast').innerText = result.roast;
+                document.getElementById('fix').innerText = result.fix;
+
+                // 점수별 색상
+                const scoreNum = parseInt(result.score);
+                const scoreElem = document.getElementById('score');
+                if(scoreNum > 80) scoreElem.style.color = "#ff4757";
+                else if(scoreNum > 40) scoreElem.style.color = "#ffa502";
+                else scoreElem.style.color = "#2ed573";
+
+                modal.style.display = 'none'; 
+                resultArea.style.display = 'block'; 
+                resultArea.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert("오류: " + error.message);
+                modal.style.display = 'none';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 2️⃣ 이미지 저장
+        function saveImage() {
+            const element = document.getElementById('captureTarget');
+            html2canvas(element, { scale: 2, backgroundColor: "#1e1e1e" }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = '꼰대력_성적표.png';
+                link.href = canvas.toDataURL();
+                link.click();
+                alert("사진첩에 저장되었습니다! 📸");
+            });
+        }
+
+        // 3️⃣ 주소 복사
+        function copyLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("주소가 복사되었습니다! 🔗");
+            }).catch(err => alert("복사 실패: " + err));
+        }
+    </script>
+</body>
+</html>
