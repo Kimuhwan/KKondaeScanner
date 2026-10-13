@@ -1,5 +1,14 @@
 // api/analyze.js
+export const config = { api: { bodyParser: { sizeLimit: "16kb" } } };
 export default async function handler(req, res) {
+    if (req.method !== "POST") {
+        res.setHeader("Allow", "POST");
+        return res.status(405).json({ error: "METHOD_NOT_ALLOWED" });
+    }
+    const input = req.body?.text;
+    if (typeof input !== "string" || !input.trim() || input.length > 4000) {
+        return res.status(400).json({ error: "INVALID_TEXT" });
+    }
     // 1. Vercel 환경변수에서 API 키를 가져옴 (보안)
     const apiKey = process.env.GEMINI_API_KEY;
 
@@ -24,9 +33,10 @@ export default async function handler(req, res) {
 
     try {
         // 4. 구글 Gemini API 호출 (모델은 1.5-flash가 가장 안정적입니다)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            signal: AbortSignal.timeout(20_000),
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }]
             })
@@ -46,7 +56,7 @@ export default async function handler(req, res) {
         res.status(200).json(result);
 
     } catch (error) {
-        console.error("API Error:", error);
+        console.error("API request failed");
         res.status(500).json({ error: "AI 분석 중 오류가 발생했습니다." });
     }
 }
